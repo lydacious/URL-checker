@@ -4,19 +4,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultDiv = document.getElementById('result');
     let timeout = null;
     urlInput.addEventListener('input', () => {
-        if (timeout !== null) {
-            clearTimeout(timeout);
-        }
         const url = urlInput.value;
-        // Throttle the server check
-        timeout = window.setTimeout(() => {
-            if (isValidURL(url)) {
-                checkURLExistence(url, resultDiv);
+        // Immediately check validty
+        if (isValidURL(url)) {
+            if (timeout !== null) {
+                clearTimeout(timeout);
             }
-            else {
-                resultDiv.textContent = 'Invalid URL format';
-            }
-        }, 500);
+            // Throttle the server check
+            timeout = window.setTimeout(() => {
+                checkURLExistence(url, resultDiv, urlInput);
+            }, 500);
+        }
+        else {
+            resultDiv.textContent = 'Invalid URL format';
+        }
     });
 });
 // URL validation regex
@@ -30,14 +31,17 @@ function isValidURL(url) {
     return urlPattern.test(url);
 }
 // Fake request
-function checkURLExistence(url, div) {
+function checkURLExistence(url, div, input) {
+    const currentUrl = url;
     fakeServerRequest(url)
         .then((response) => {
-        if (response.exists) {
-            div.textContent = `URL exists and it is a ${response.type}`;
-        }
-        else {
-            div.textContent = 'URL does not exist';
+        if (input.value === currentUrl) { // This makes sure that the result belongs to the latest input
+            if (response.exists) {
+                div.textContent = `URL exists and it is a ${response.type}`;
+            }
+            else {
+                div.textContent = 'URL does not exist';
+            }
         }
     })
         .catch(error => {

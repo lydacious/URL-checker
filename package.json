@@ -1,0 +1,15 @@
+{
+  "name": "url-checker",
+  "version": "1.0.0",
+  "description": "A simple URL checker",
+  "main": "dist/app.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "npm run build && npx serve ."
+  },
+  "author": "lydacious",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^4.9.5"
+  }
+}

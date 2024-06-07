@@ -4,21 +4,22 @@ document.addEventListener('DOMContentLoaded', () => {
     let timeout: number | null = null;
 
     urlInput.addEventListener('input', () => {
-        if (timeout !== null) {
-            clearTimeout(timeout);
-        }
-
         const url: string = urlInput.value;
 
-        // Throttle the server check
-        timeout = window.setTimeout(() => {
-            if (isValidURL(url)) {
-                checkURLExistence(url, resultDiv);
-            } else {
-                resultDiv.textContent = 'Invalid URL format';
+        // Immediately check validty
+        if (isValidURL(url)) {
+            if (timeout !== null) {
+                clearTimeout(timeout);
             }
-        }, 500);
-    }); 
+
+            // Throttle the server check
+            timeout = window.setTimeout(() => {
+                checkURLExistence(url, resultDiv, urlInput);
+            }, 500);
+        } else {
+            resultDiv.textContent = 'Invalid URL format';
+        }
+    });
 });
 
 // URL validation regex
@@ -30,8 +31,8 @@ const urlPattern: RegExp = new RegExp('^(https?:\\/\\/)?'+ // protocol
 '(\\#[-a-z\\d_]*)?$','i');
 
 interface ServerResponse {
-exists: boolean;
-type: 'file' | 'folder' | null;
+    exists: boolean;
+    type: 'file' | 'folder' | null;
 }
 
 function isValidURL(url: string): boolean {
@@ -39,14 +40,17 @@ function isValidURL(url: string): boolean {
 }
 
 // Fake request
-function checkURLExistence(url: string, div: HTMLDivElement): void {
-    
+function checkURLExistence(url: string, div: HTMLDivElement, input: HTMLInputElement): void {
+    const currentUrl = url;
+
     fakeServerRequest(url)
         .then((response: ServerResponse) => {
-            if (response.exists) {
-                div.textContent = `URL exists and it is a ${response.type}`;
-            } else {
-                div.textContent = 'URL does not exist';
+            if (input.value === currentUrl) { // This makes sure that the result belongs to the latest input
+                if (response.exists) {
+                    div.textContent = `URL exists and it is a ${response.type}`;
+                } else {
+                    div.textContent = 'URL does not exist';
+                }
             }
         })
         .catch(error => {
@@ -59,14 +63,13 @@ function checkURLExistence(url: string, div: HTMLDivElement): void {
 function fakeServerRequest(url: string): Promise<ServerResponse> {
     return new Promise((resolve, reject) => {
         setTimeout(() => {
-            
-            const exists = Math.random() > 0.5; 
+            const exists = Math.random() > 0.5;
             const type = exists ? (Math.random() > 0.5 ? 'file' : 'folder') : null;
 
             resolve({
                 exists,
                 type
             });
-        }, 1000); 
+        }, 1000);
     });
 }
